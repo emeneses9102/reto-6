@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Listado de productos HBS</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+
+</head>
+<body>
+    {{{body }}}
+    <script src="./socket.io/socket.io.min.js"></script>
+    <script >
+        const socket = io()
+    
+
+        const listado = document.querySelector("#listaProductos")
+        const boxMessages = document.querySelector("#boxMessages")
+        const enviarMensaje = document.querySelector("#buttonSend")
+        
+        socket.on('productos', (productos)=>{
+            if(productos.length === 0){
+                return listado.innerHTML = `<tr class="text-center">
+                        <td colspan="3" style="background-color: #585858;">No se encontraron productos</td>
+                    </tr>`
+            }
+            listado.innerHTML = productos.map(productos =>{
+                return(
+                    `<tr>
+                        <td>${productos.nombre}</td>
+                        <td>${productos.precio} </td>
+                        <td>
+                            <img src=${productos.url} 
+                                class=" img-fluid  rounded" 
+                                style="height: 35px;" 
+                                alt="imagen">
+                        </td>
+                    </tr>`
+                )
+            }).join('')  
+        })        
+        socket.on('messages', (messages)=>{
+            boxMessages.innerHTML = messages.map(message =>{
+                return(
+                    `<p class="m-0">
+                        <span class="text-primary"><b>${message.correo}</b></span>
+                        <span class="text-danger">[${message.fechaMessage}] :</span>
+                        <span class="text-success"><i>${message.texto}</i></span>
+                    </p>`
+                )
+            }).join('') 
+        })
+
+        enviarMensaje.addEventListener('click',(event)=>{
+            event.preventDefault()
+            const usuario = document.querySelector("#usuario").value
+            const mensaje = document.querySelector("#texto").value
+            const regex = /^[-\w.%+]{1,64}@(?:[A-Z0-9-]{1,63}\.){1,125}[A-Z]{2,63}$/i;
+
+            if(usuario === "" || !regex.test(usuario))
+            {
+                document.querySelector("#invalid").innerHTML = '<small style="color:#dc3545">Usuario requerido, debe ser un formato de correo válido</small>'
+                document.querySelector("#usuario").style.cssText = 'border-color:#dc3545';
+                return
+            }
+
+            let dato = new Date()
+            let fecha = `${dato.getDate()}/${dato.getMonth()+1}/${dato.getFullYear()} ${dato.getHours()}:${dato.getMinutes()}`
+
+            const message ={
+                correo: usuario, 
+                fechaMessage: fecha, 
+                texto:mensaje
+            }
+            socket.emit('newMessage', message)
+            document.querySelector("#form").reset()
+            document.querySelector("#usuario").style.cssText = 'border-color:none';
+            document.querySelector("#invalid").innerHTML = ''
+        })
+    </script>
+</body>
+</html>
