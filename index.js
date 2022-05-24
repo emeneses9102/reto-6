@@ -5,16 +5,19 @@ const http = require('http')
 const app = express()
 const httpServer = http.createServer(app)
 const io = new ioServer(httpServer)
+const Mensaje = require('./mensaje')
 
+let mensajes = new Mensaje('mensajes.txt')
 let productos = []
 let idProducto = 1
 let dato = new Date()
-let fecha = `${dato.getDate()}/${dato.getMonth()+1}/${dato.getFullYear()} ${dato.getHours()}:${dato.getMinutes()}`
 
-let messages = [
+
+/*let messages = [
     {correo:'Servidor', fechaMessage: fecha, texto:'Saludo del servidor'}
-]
+]*/
 const handlebars = require('express-handlebars')
+
 
 app.use(express.json())
 app.use(express.urlencoded({ extended: true}))
@@ -22,15 +25,17 @@ app.use(express.urlencoded({ extended: true}))
 app.set('views','./views')
 
 //NUEVO SERVIDOR
-io.on('connection',(socket)=>{
+io.on('connection',async (socket)=>{
+
+
     console.log('Un cliente se a conectado', socket.id)
     io.sockets.emit('productos', productos)
 
-    io.sockets.emit('messages', messages)
+    io.sockets.emit('messages',await mensajes.getAll())
     
-    socket.on("newMessage", message =>{
-        messages.push(message)
-        io.sockets.emit('messages', messages)
+    socket.on("newMessage", async (message) =>{
+        await mensajes.save(message)
+        io.sockets.emit('messages', await mensajes.getAll())
     })
 })
  

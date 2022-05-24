@@ -41,6 +41,7 @@
             }).join('')  
         })        
         socket.on('messages', (messages)=>{
+            console.log(messages)
             boxMessages.innerHTML = messages.map(message =>{
                 return(
                     `<p class="m-0">
